@@ -1,46 +1,75 @@
 import { createStore } from "redux";
 
-const add = document.querySelector(".add");
-const minus = document.querySelector(".minus");
-const number = document.querySelector("span");
+const form = document.querySelector(".todo");
+const input = document.querySelector("input");
+const ul = document.querySelector("ul");
 
-const ADD = "ADD";
-const MINUS = "MINUS";
+const ADD_TODO = "ADD_TODO";
+const DELETE_TODO = "DELETE_TODO";
 
-// reducer
-const countModifier = (state = 0, action) => {
-  switch (action.type) {
-    case ADD:
-      return state + 1;
-    case MINUS:
-      return state - 1;
-    default: 
-      return;
+const addTodo = (text) =>{
+  return {
+    type: ADD_TODO,
+    text,
   }
-  // if (action.type === "ADD") {
-  //   return state + 1;
-  // } else if (action.type === "MINUS"){
-  //   console.log("빼기");
-  //   return state - 1;
-  // } else {
-  //   return state;
-  // }
-};
-
-//store
-const countStore = createStore(countModifier);
-
-//subscribe
-const onChange = () => {
-  number.textContent = countStore.getState();
 }
-countStore.subscribe(onChange);
 
-//action
-add.addEventListener("click", () => {
-  countStore.dispatch({type: ADD});
-})
+const deleteTodo = (id) => {
+  return {
+    type: DELETE_TODO,
+    id,
+  }
+}
 
-minus.addEventListener("click", () => {
-  countStore.dispatch({type: MINUS});
-})
+const reducer = (state = [], action) => {
+  console.log(typeof action.id)
+  switch (action.type) {
+    case ADD_TODO:
+      return [...state, {text: action.text, id: Date.now()}];
+    case DELETE_TODO:
+      return state.filter((todo) => todo.id !== action.id);
+    default:
+      return state;
+  }
+}
+
+const store = createStore(reducer);
+
+const paintTodos = () => {
+  const Todos = store.getState();
+  ul.innerHTML = "";
+  Todos.forEach((todo) => {
+    const { text, id } = todo;
+    const li = document.createElement("li");
+    li.id = id;
+    li.textContent = text;
+    ul.appendChild(li);
+  })
+}
+
+store.subscribe(paintTodos)
+
+const dispatchAddTodo = (text) => {
+  if (input.value !== "") {
+    input.value = "";
+    store.dispatch(addTodo(text));
+  }
+}
+
+const dispatchDeleteTodo = (id) => {
+  store.dispatch(deleteTodo(id));
+}
+
+const onSubmit = (e) => {
+  e.preventDefault();
+  const todo = input.value;
+  dispatchAddTodo(todo);
+}
+
+const onClick = (e) => {
+  const id = parseInt(e.target.id);
+  dispatchDeleteTodo(id);
+}
+
+ul.addEventListener("click", onClick);
+form.addEventListener("submit", onSubmit);
